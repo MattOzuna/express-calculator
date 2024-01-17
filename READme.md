@@ -14,14 +14,7 @@ The three base routes are ***/mean***, ***/median***, ***/mode***. All accept
 
 Each route takes a query key of ***nums*** which is a comma-separated list of numbers. For example, if I want to get the mean of 1, 3, 5, and 7, that would look like be a GET request to ***/mean?nums=1,3,5,7***.
 
-The response of each operation should be JSON which looks like this:
-
-```json
-response: {
-  operation: "mean",
-  value: 4
-}
-```
+The response of each operation should be JSON.
 
 The app should “gracefully” handle the following errors:
 
