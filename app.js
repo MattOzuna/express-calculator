@@ -1,4 +1,6 @@
 const express = require('express');
+const ExpressError = require("./expressError")
+const {mean,median,mode,makeNums} = require("./helpers")
 
 const app = express();
 
@@ -6,87 +8,70 @@ app.use(express.json());
 
 //====================================ROUTES====================================//
 
-app.get('/mean', (request, response) =>{
+app.get('/mean', (request, response, next) =>{
     //takes the query param and passes to the mean helper funtion
     //returns json
-    return response.json(mean(request.query.nums.split(',')))
+    try{
+        if (!request.query.nums){
+            throw new ExpressError ('nums are required', 400)
+        }
+        const nums = makeNums(request.query.nums.split(','))
+        return response.json(mean(nums))
+    }
+    catch(err){
+        return next(err)
+    }
 })
 
 
-app.get('/median', (request, response) =>{
+app.get('/median', (request, response, next) =>{
     //takes the query param and passes to the median helper funtion
     //returns json
-    return response.json(median(request.query.nums.split(',')))
+    try{
+        if (!request.query.nums){
+            throw new ExpressError ('nums are required', 400)
+        }
+        const nums = makeNums(request.query.nums.split(','))
+        return response.json(median(nums))
+    }
+    catch (err){
+        return next(err)
+    }
 })
 
 
-app.get('/mode', (request, response) =>{
-    let nums = request.query.nums.split(',')
-    return response.json(mode(request.query.nums.split(',')))
+app.get('/mode', (request, response,next) =>{
+    try{
+        if (!request.query.nums){
+            throw new ExpressError ('nums are required', 400)
+        }
+        const nums = makeNums(request.query.nums.split(','))
+        return response.json(mode(nums))
+    }
+    catch (err){
+        return next(err)
+    }
 
 })
+
+//generic error handling
+app.use((request,response,next) => {
+    const notFoundError = new ExpressError("Not Found", 404);
+    return next(notFoundError)
+})
+
+app.use(function(err, req, res, next) {
+    // the default status is 500 Internal Server Error
+    let status = err.status || 500;
+    let message = err.message;
+  
+    // set the status and alert the user
+      return res.status(status).json({
+      error: {message, status}
+    });
+  });
 
 app.listen(3000, () => {
     console.log('Server started on port 3000')
 })
 
-//====================================Helpers====================================//
-
-const mean = (nums) =>{
-
-    let sum = nums.reduce((acc,num)=>acc+parseInt(num),0)
-    return {response: {
-        operation: 'mean',
-        value: sum/(nums.length)
-    }};
-}
-
-const median = (nums) =>{
-    let answer = 0;
-    
-    if (nums.length%2 === 1){
-        let i = nums.length/2;
-        answer = parseInt(nums[i]);
-    } 
-    else {
-        let i = nums.length/2;
-        answer = (parseInt(nums[i]) + parseInt(nums[i-1]))/2;
-    }
-
-    return {response: {
-        operation: 'median',
-        value: answer
-    }};
-}
-
-const mode = (nums) =>{
-    let counts = new Object()
-
-    nums.map((num) => {
-        if(!counts[num]){
-            counts[num] = 1
-        }
-        else {
-            counts[num] ++
-        }
-    })
-
-    max = 0
-    
-    for (let key in counts){
-        if (counts[key] > max){
-            max = parseInt(key)
-        }
-    }
-
-    if (max === 1){
-        return {response: {
-            operation: 'mode',
-            value: 'No mode'
-        }};
-    }
-    return {response: {
-            operation: 'mode',
-            value: max
-        }};
-}
